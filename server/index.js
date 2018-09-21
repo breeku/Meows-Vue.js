@@ -16,7 +16,6 @@ app.use(express.json())
 
 app.get('/', (req, res) => {
     res.json({
-
     })
 })
 
@@ -29,8 +28,7 @@ app.get('/meows', (req, res) => {
 })
 
 let isValidMeow = (meow => {
-    return meow.name && meow.name.toString().trim() !== '' &&
-        meow.content && meow.content.toString().trim() !== ''
+    return meow.name && meow.name.toString().trim() !== '' && meow.content && meow.content.toString().trim() !== ''
 })
 
 app.use(rateLimit({
@@ -38,11 +36,12 @@ app.use(rateLimit({
     max: 1
 }))
 
-app.post('/meows', (req, res) => {
+app.post('/meows', (req, res,) => {
     if (isValidMeow(req.body)) {
         const meow = {
             name: filter.clean(req.body.name.toString()),
             content: filter.clean(req.body.content.toString()),
+            email: filter.clean(req.body.email.toString()),
             created: new Date()
         }
         meows

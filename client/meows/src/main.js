@@ -1,9 +1,24 @@
+import firebase from 'firebase/app'
+import 'firebase/auth'
 import Vue from 'vue'
 import './plugins/vuetify'
 import App from './App.vue'
 
+var config = {
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+};
+
+firebase.initializeApp(config);
+console.log('Firebase init')
+
 Vue.config.productionTip = false;
 
-new Vue({
-  render: h => h(App)
-}).$mount('#app')
+firebase.auth().onAuthStateChanged(function (user) {
+  if (app) {
+    new Vue({
+      render: h => h(App)
+    }).$mount('#app')
+  }
+})
