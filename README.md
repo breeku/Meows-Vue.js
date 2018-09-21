@@ -3,9 +3,10 @@
 ### Vue.js version of [Meows](https://github.com/breeku/Meows)
 
 Todo:
+- [x] User authentication
 - [ ] Demo online
+- [ ] Seperate into different components
 - [ ] Pictures in posts
-- [ ] User authentication
 - [ ] Post comments
 - [ ] Realtime updates
 
