@@ -54,12 +54,12 @@
                 <v-card-title primary-title class="headline grey lighten-3">
                   New Meow 😽
                 </v-card-title>
-                  <v-form @submit.prevent="postMeow" v-model="valid" lazy-validation>
+                  <v-form v-model="valid" lazy-validation>
                     <v-text-field required :rules="nameRules" v-model="meowform.name" label="Title" required></v-text-field>
                     <v-text-field required :rules="contentRules" v-model="meowform.content" label="Content" required></v-text-field>
                       <v-card-actions>
                         <v-spacer></v-spacer>
-                        <v-btn :disabled="!valid" color="blue darken-1" @click.native="newMeow=false" type="submit">Submit 🐈</v-btn>
+                        <v-btn :disabled="!valid" color="blue darken-1" @click.native="newMeow=false" v-on:click="postMeow">Submit 🐈</v-btn>
                       </v-card-actions>
                   </v-form>
               </v-container>
@@ -133,6 +133,7 @@ export default {
       newMeow: null,
       email: "",
       password: "",
+      
       nameRules: [v => !!v || "Title is required"],
       contentRules: [v => !!v || "Content is required"],
       emailRules: [
@@ -211,7 +212,7 @@ export default {
           // after logout
         });
     },
-    getMeows() {
+    getMeows: function() {
       this.loading = true;
       axios.get(APIURL).then(response => {
         this.loading = false;
@@ -228,9 +229,9 @@ export default {
         this.meows.reverse();
       });
     },
-    postMeow() {
-      name = this.meowform.name;
-      content = this.meowform.content;
+    postMeow: function() {
+      let name = this.meowform.name;
+      let content = this.meowform.content;
       let email = user.email;
       const meowJSON = {
         name,
