@@ -11,7 +11,6 @@ var config = {
 };
 
 firebase.initializeApp(config);
-console.log('Firebase init')
 
 Vue.config.productionTip = false;
 
