@@ -1,6 +1,6 @@
 <template>
 <div>
-  <v-container fluid fill-height>
+  <v-container fluid fill-height style="padding-bottom:5rem;">
     <v-layout justify-center>
       <v-flex xs12 sm8 md6 lg4>
         <div class="text-xs-center">
@@ -14,7 +14,7 @@
                 <v-card-title primary-title class="headline grey lighten-3">
                   Register a new account 😽
                 </v-card-title>
-                  <v-form v-model="valid" lazy-validation>
+                  <v-form v-model="valid">
                     <v-text-field required :rules="emailRules" v-model="email" type="text" label="Any email, there is no address confirmation" required></v-text-field>
                     <v-text-field required :rules="passwordRules" v-model="password" type="password" label="Password" required></v-text-field>
                       <v-card-actions>
@@ -32,7 +32,7 @@
                 <v-card-title primary-title class="headline grey lighten-3">
                   Login 😽
                 </v-card-title>
-                  <v-form v-model="valid" lazy-validation>
+                  <v-form v-model="valid">
                     <v-text-field required :rules="emailRules" v-model="email" type="text" label="Email" required></v-text-field>
                     <v-text-field required :rules="passwordRules" v-model="password" type="password" label="Password" required></v-text-field>
                       <v-card-actions>
@@ -54,7 +54,7 @@
                 <v-card-title primary-title class="headline grey lighten-3">
                   New Meow 😽
                 </v-card-title>
-                  <v-form v-model="valid" lazy-validation>
+                  <v-form v-model="valid">
                     <v-text-field required :rules="nameRules" v-model="meowform.name" label="Title" required></v-text-field>
                     <v-text-field required :rules="contentRules" v-model="meowform.content" label="Content" required></v-text-field>
                       <v-card-actions>
@@ -70,9 +70,9 @@
       <div v-if="loading" class="text-xs-center">
         <v-progress-circular :size="80" indeterminate color="primary"></v-progress-circular>
       </div>
-      <transition-group name="slide-y-transition">
+      <transition-group name="fade-transition" tag="div">
       <div v-for="(meow, id) in meows" v-bind:key="id">
-        <v-card class="elevation-4 mt-3 mb-4 pb-2 pt-1 meows" color="blue">
+        <v-card class="elevation-2 mt-3 mb-4 pb-2 pt-1 meowers" color="blue">
           <v-card-title class="pb-0">
             <div>
               <h1 class="display-1">{{ meow.name }}</h1>
@@ -87,8 +87,27 @@
             <v-spacer></v-spacer>
             <p class="text-xs-right">{{ meow.created | filterDate }}</p>
             <div v-if="meow.own">
-              <v-btn slot="activator" small depressed color="white">Modify</v-btn>
-              <v-btn slot="activator" small depressed color="white">Remove</v-btn>
+            <v-layout>
+              <v-dialog v-model="modifyMeow" max-width="500px" lazy> <!-- Loses context -->
+                <v-icon medium slot="activator" color="white" v-on:click="currentMeow = meow">edit</v-icon>
+                  <v-card>
+                    <v-container>
+                      <v-card-title primary-title class="headline grey lighten-3">
+                       Edit Meow 😽
+                      </v-card-title>
+                        <v-form v-model="valid">
+                          <v-text-field required :rules="nameRules" v-model="editmeowform.name" label="Title" required></v-text-field>
+                          <v-text-field required :rules="contentRules" v-model="editmeowform.content" label="Content" required></v-text-field>
+                            <v-card-actions>
+                            <v-spacer></v-spacer>
+                              <v-btn :disabled="!valid" color="blue darken-1" @click.native="modifyMeow=false" v-on:click="editMeow(currentMeow)">Submit 🐈</v-btn>
+                            </v-card-actions>
+                        </v-form>
+                      </v-container>
+                    </v-card>
+                </v-dialog>
+              <v-icon medium color="white" slot="activator" v-on:click="removeMeow(meow)">delete</v-icon>
+            </v-layout>
             </div>
           </v-card-actions>
         </v-card>
@@ -97,11 +116,11 @@
       </v-flex>
     </v-layout>
   </v-container>
-  <v-footer class="pa-3">
-    <v-spacer></v-spacer>
-    <div>
-      &copy; {{ new Date().getFullYear() }}
-    </div>
+  <v-footer absolute class="pa-4 foooter">
+    <v-layout justify-center row wrap>
+      <v-btn flat color="black" href="https://github.com/breeku/Meows-Vue.js" target="!blank">Github</v-btn>
+      <v-btn flat color="black" href="http://matiasmakela.com" target="!blank">Author</v-btn>
+    </v-layout>
   </v-footer>
 </div>
 </template>
@@ -112,11 +131,12 @@ import "firebase/auth";
 import moment from "moment";
 
 const axios = require("axios");
-// const APIURL = 'http://localhost:5000/meows'
+//const APIURL = 'http://localhost:5000/meows'
 const APIURL = 'https://meows-vue-api.now.sh/meows'
 let userToken = null;
 let user = null;
 let uid = null;
+let obj = null;
 
 export default {
   name: "Main",
@@ -131,9 +151,10 @@ export default {
       register: null,
       login: null,
       newMeow: null,
+      modifyMeow: null,
+      currentMeow: null,
       email: "",
       password: "",
-      
       nameRules: [v => !!v || "Title is required"],
       contentRules: [v => !!v || "Content is required"],
       emailRules: [
@@ -147,8 +168,14 @@ export default {
       meowform: {
         name: "",
         content: "",
+      },
+      editmeowform: {
+        name: '',
+        content: ''
       }
     };
+  },
+  components: {
   },
   filters: {
     filterDate: function(value) {
@@ -184,7 +211,7 @@ export default {
         .createUserWithEmailAndPassword(this.email, this.password)
         .then(
           user => {
-            // after created
+            // after signup
           },
           err => {
             alert("Error: " + err.message);
@@ -204,26 +231,17 @@ export default {
           }
         );
     },
-    logOut: function() {
-      firebase
-        .auth()
-        .signOut()
-        .then(() => {
-          // after logout
-        });
-    },
     getMeows: function() {
       this.loading = true;
       axios.get(APIURL).then(response => {
         this.loading = false;
         this.meows = response.data;
         for (let a = 0; a < this.meows.length; a++) {
-          let obj = this.meows[a];
-          if (uid != null) {
+          obj = this.meows[a];
+          if (this.loggedIn == true) {
             if (obj.uid == uid) {
-              obj["own"] = "yes";
-            } else {
-            }
+              obj["own"] = true;
+            } 
           }
         }
         this.meows.reverse();
@@ -250,6 +268,45 @@ export default {
         .catch(error => {
           console.log(error);
         });
+    },
+    editMeow: function(arg) {
+      let id = arg._id
+      let name = this.editmeowform.name
+      let content = this.editmeowform.content
+      let editPost = true
+      const editJSON = {
+        id,
+        name,
+        content,
+        userToken,
+        editPost
+      }
+      axios.post(APIURL, editJSON).then(response => {
+        this.getMeows();
+        this.editmeowform.name = ''
+        this.editmeowform.content = ''
+      })
+    },
+    removeMeow: function(arg) {
+      let id = arg._id
+      let markedforRemoval = true
+      const removeJSON = {
+        id,
+        userToken,
+        markedforRemoval
+      }
+      axios.post(APIURL, removeJSON).then(response => {
+        //this.meows.splice(arg, 1) // locally remove card from array, but since there is no realtime db its better to get in case there are new posts.
+        this.getMeows();
+      })
+    },
+    logOut: function() {
+      firebase
+        .auth()
+        .signOut()
+        .then(() => {
+          // after logout
+        });
     }
   }
 };
@@ -257,10 +314,15 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.meows {
+.meowers {
   color: white;
 }
 p {
   margin: 5px;
+}
+.foooter {
+  background-color: transparent;
+  border-top: 1px solid;
+  border-color: rgb(161, 196, 253)
 }
 </style>

@@ -7,8 +7,8 @@ const admin = require("firebase-admin");
 let serviceAccount = require("./servicekey/serviceAccountKey.json");
 
 admin.initializeApp({
-  credential: '',
-  databaseURL: ''
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: ""
 });
 
 const app = express();
@@ -42,8 +42,8 @@ let isValidMeow = meow => {
 
 app.use(
   rateLimit({
-    windowMs: 5 * 1000, // 5 Seconds
-    max: 1
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100
   })
 );
 
@@ -54,7 +54,23 @@ app.post("/meows", (req, res) => {
     .verifyIdToken(userToken)
     .then(function(decodedToken) {
       let uid = decodedToken.uid;
+      if (req.body.markedforRemoval == true) {
+        let id = req.body.id
+        meows.findOneAndDelete(id).then((result) => {
+          res.json(result)
+        })
+      } else {
       if (isValidMeow(req.body)) {
+        if (req.body.editPost == true) {
+          let id = req.body.id
+          const editmeow = {
+            name: filter.clean(req.body.name.toString()),
+            content:  filter.clean(req.body.content.toString()),
+          };
+          meows.update(id, {$set: editmeow}).then(editedMeow => {
+            res.json(editedMeow);
+        })
+      } else {
         const meow = {
           name: filter.clean(req.body.name.toString()),
           content: filter.clean(req.body.content.toString()),
@@ -65,6 +81,7 @@ app.post("/meows", (req, res) => {
         meows.insert(meow).then(createdMeow => {
           res.json(createdMeow);
         });
+    }
       } else {
         console.log("Invalid post submitted");
         res.status(422);
@@ -73,6 +90,7 @@ app.post("/meows", (req, res) => {
           solution: 'Check that your submit had name and content.'
         });
       }
+    }
     }).catch(function(error) {
         console.log('Invalid token')
         res.json({
