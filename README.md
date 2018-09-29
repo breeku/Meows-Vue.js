@@ -4,7 +4,7 @@
 
 #### Vue.js version of [Meows](https://github.com/breeku/Meows)
 
-### Todo:
+### Goals:
 #### Both:
 - [x] Allow user to post posts.
   - MongoDB
